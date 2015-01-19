@@ -32,6 +32,24 @@ import
 	"log"
 )
 
+func homeHandler (w http.ResponseWriter, r *http.Request) {
+
+
+}
+
+func loginHandler (w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "<html><body><form action=\"login\">What is your name, Earthling?<input type=\"text\" name=\"name\" size=\"50\"><input type=\"submit\"></form></p></body></html>")
+
+	
+}
+
+func logoutHandler (w http.ResponseWriter, r *http.Request) {
+
+	fmt.Fprint(w, "<html><head><META http-equiv=\"refresh\" content=\"10;URL=/\"><body><p>Good-bye.</p></body></html>")
+
+	
+}
+
 func timeHandler (w http.ResponseWriter, r *http.Request) {
 	//getting the current time
 	currentTime := time.Now()
@@ -54,6 +72,12 @@ func pageError(w http.ResponseWriter, r *http.Request){
 
 }
 func main() {
+	//Declaring map with string indexs to store UDID ints
+	//Used to store user logins.
+	
+	//var userMap map[string]int
+	
+
 	//declaring command line flags for the time server
 
 	//Port number (optional): declares what port the server should launch on.
@@ -75,8 +99,14 @@ func main() {
 	//adding a ":" to the port number to match the format requested by http.ListenAndServe
 	portNumber := ":"+*portPointer
 
+
+    http.HandleFunc("/login", loginHandler)
+
+    http.HandleFunc("/logout", logoutHandler)
+
 	//If the /time page is requested, the time will be displayed
     http.HandleFunc("/time", timeHandler)
+
     //If any other page is requested, a 404 page will be displayed
     http.HandleFunc("/", pageError)
 
