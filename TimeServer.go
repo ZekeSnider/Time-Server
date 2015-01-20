@@ -30,7 +30,13 @@ import
 	"time"
 	"flag"
 	"log"
+    //"net/http/cookiejar"
+    "os/exec"
 )
+
+//Declaring map with string indexs to store UDID ints
+//Used to store user logins.
+var userMap map[string]string
 
 func homeHandler (w http.ResponseWriter, r *http.Request) {
 
@@ -38,9 +44,34 @@ func homeHandler (w http.ResponseWriter, r *http.Request) {
 }
 
 func loginHandler (w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "<html><body><form action=\"login\">What is your name, Earthling?<input type=\"text\" name=\"name\" size=\"50\"><input type=\"submit\"></form></p></body></html>")
+	log.Println(r.Method)
+	if r.Method == "GET" {
+		fmt.Fprint(w, "<html><body><form method=\"post\" action=\"login\">What is your name, Earthling?<input type=\"text\" name=\"name\" size=\"50\"><input type=\"submit\"></form></p></body></html>")
+	} else if r.Method == "POST" {
+		userName:= r.FormValue("name")
+		userUUIDByte,err := exec.Command("uuidgen").Output()
+
+		userUUIDString := string(userUUIDByte)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		userCookie := &http.Cookie{Name: userName, Value: "10", Expires:time.Now().Add(180*24*time.Hour), HttpOnly:true}
+		
+		http.SetCookie(w, userCookie)
+
+		userMap[userUUIDString] = userName
+
+		http.Redirect(w, r, "/", 302)
+	}
+}
+
+func loginActionHandler (w http.ResponseWriter, r *http.Request){
+	
 
 	
+
 }
 
 func logoutHandler (w http.ResponseWriter, r *http.Request) {
@@ -72,11 +103,9 @@ func pageError(w http.ResponseWriter, r *http.Request){
 
 }
 func main() {
-	//Declaring map with string indexs to store UDID ints
-	//Used to store user logins.
-	
-	//var userMap map[string]int
-	
+
+	//Creating the map top store the UUID and name values
+	userMap = make(map[string]string)
 
 	//declaring command line flags for the time server
 
@@ -93,14 +122,16 @@ func main() {
 
 	//Outputting server version number if it is requested in command line flags
 	if *versionBoolPointer == true {
-		fmt.Print("Time server version 1.0")
+		fmt.Print("Personalized time server version 1.0.2")
 	}
 
 	//adding a ":" to the port number to match the format requested by http.ListenAndServe
 	portNumber := ":"+*portPointer
 
 
+
     http.HandleFunc("/login", loginHandler)
+    //http.HandleFunc("/login/:name", loginActionHandler)
 
     http.HandleFunc("/logout", logoutHandler)
 
