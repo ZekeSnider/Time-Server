@@ -30,6 +30,7 @@ import
 	"time"
 	"flag"
 	"log"
+	"strings"
     //"net/http/cookiejar"
     "os/exec"
 )
@@ -40,6 +41,22 @@ var userMap map[string]string
 
 func homeHandler (w http.ResponseWriter, r *http.Request) {
 
+	if r.URL.Path != "/" {
+		pageError(w,r)
+		return
+	}
+
+	cookie,_ := r.Cookie("TimeServer")
+
+	if cookie != nil {
+		value := cookie.Value
+		name := userMap[value]
+		log.Println(name)
+		log.Println(value)
+		fmt.Fprint(w, "<html><body><p>hello, ", name, ". </p></body></html>")
+	} else {
+		http.Redirect(w, r, "/login", 302)
+	}
 
 }
 
@@ -53,26 +70,22 @@ func loginHandler (w http.ResponseWriter, r *http.Request) {
 
 		userUUIDString := string(userUUIDByte)
 
+		userUUIDString = strings.Replace(userUUIDString,"\n", "",-1)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		userCookie := &http.Cookie{Name: userName, Value: "10", Expires:time.Now().Add(180*24*time.Hour), HttpOnly:true}
+		userCookie := &http.Cookie{Name: "TimeServer", Value: userUUIDString, Expires:time.Now().Add(180*24*time.Hour), HttpOnly:true}
 		
 		http.SetCookie(w, userCookie)
 
+		log.Println(userName)
 		userMap[userUUIDString] = userName
 
 		http.Redirect(w, r, "/", 302)
 	}
 }
 
-func loginActionHandler (w http.ResponseWriter, r *http.Request){
-	
-
-	
-
-}
 
 func logoutHandler (w http.ResponseWriter, r *http.Request) {
 
@@ -139,7 +152,7 @@ func main() {
     http.HandleFunc("/time", timeHandler)
 
     //If any other page is requested, a 404 page will be displayed
-    http.HandleFunc("/", pageError)
+    http.HandleFunc("/", homeHandler)
 
     //attempting to start the server on the requested port.
     //if there are any errors they will be stored to the err variable
