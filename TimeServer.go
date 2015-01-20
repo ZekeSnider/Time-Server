@@ -26,12 +26,12 @@ package main
 import 
 (
 	"net/http"
+	"html"
 	"fmt"
 	"time"
 	"flag"
 	"log"
 	"strings"
-    //"net/http/cookiejar"
     "os/exec"
 )
 
@@ -46,7 +46,7 @@ func homeHandler (w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cookie,_ := r.Cookie("TimeServer")
+	cookie,_ := r.Cookie("TimeServerSession")
 
 	if cookie != nil {
 		value := cookie.Value
@@ -67,6 +67,9 @@ func loginHandler (w http.ResponseWriter, r *http.Request) {
 	} else if r.Method == "POST" {
 		userName:= r.FormValue("name")
 		if userName != "" {
+
+			userName = html.EscapeString(userName)
+
 			userUUIDByte,err := exec.Command("uuidgen").Output()
 
 			userUUIDString := string(userUUIDByte)
@@ -76,7 +79,7 @@ func loginHandler (w http.ResponseWriter, r *http.Request) {
 				log.Fatal(err)
 			}
 
-			userCookie := &http.Cookie{Name: "TimeServer", Value: userUUIDString, Expires:time.Now().Add(180*24*time.Hour), HttpOnly:true}
+			userCookie := &http.Cookie{Name: "TimeServerSession", Value: userUUIDString, Expires:time.Now().Add(180*24*time.Hour), HttpOnly:true}
 			
 			http.SetCookie(w, userCookie)
 
@@ -92,6 +95,14 @@ func loginHandler (w http.ResponseWriter, r *http.Request) {
 
 
 func logoutHandler (w http.ResponseWriter, r *http.Request) {
+	cookie,_ := r.Cookie("TimeServerSession")
+
+	if cookie != nil {
+		value := cookie.Value
+		deleteCookie := &http.Cookie{Name: "TimeServerSession", Value: value, Expires:time.Now(), HttpOnly:true}
+		http.SetCookie(w, deleteCookie)
+	}
+
 
 	fmt.Fprint(w, "<html><head><META http-equiv=\"refresh\" content=\"10;URL=/\"><body><p>Good-bye.</p></body></html>")
 
@@ -110,7 +121,7 @@ func timeHandler (w http.ResponseWriter, r *http.Request) {
 	//printing the body of the page
 	fmt.Fprint(w, "<body><p>The time is now <span class=\"time\">", pageTime, "</span>")
 
-	cookie,_ := r.Cookie("TimeServer")
+	cookie,_ := r.Cookie("TimeServerSession")
 
 	if cookie != nil {
 		value := cookie.Value
