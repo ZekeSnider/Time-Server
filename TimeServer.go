@@ -66,23 +66,27 @@ func loginHandler (w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "<html><body><form method=\"post\" action=\"login\">What is your name, Earthling?<input type=\"text\" name=\"name\" size=\"50\"><input type=\"submit\"></form></p></body></html>")
 	} else if r.Method == "POST" {
 		userName:= r.FormValue("name")
-		userUUIDByte,err := exec.Command("uuidgen").Output()
+		if userName != "" {
+			userUUIDByte,err := exec.Command("uuidgen").Output()
 
-		userUUIDString := string(userUUIDByte)
+			userUUIDString := string(userUUIDByte)
 
-		userUUIDString = strings.Replace(userUUIDString,"\n", "",-1)
-		if err != nil {
-			log.Fatal(err)
+			userUUIDString = strings.Replace(userUUIDString,"\n", "",-1)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			userCookie := &http.Cookie{Name: "TimeServer", Value: userUUIDString, Expires:time.Now().Add(180*24*time.Hour), HttpOnly:true}
+			
+			http.SetCookie(w, userCookie)
+
+			log.Println(userName)
+			userMap[userUUIDString] = userName
+
+			http.Redirect(w, r, "/", 302)
+		} else {
+			fmt.Fprint(w, "<html><body><form method=\"post\" action=\"login\">What is your name, Earthling?<input type=\"text\" name=\"name\" size=\"50\"><input type=\"submit\"></form>C'mon, I need a name.</p></body></html>")
 		}
-
-		userCookie := &http.Cookie{Name: "TimeServer", Value: userUUIDString, Expires:time.Now().Add(180*24*time.Hour), HttpOnly:true}
-		
-		http.SetCookie(w, userCookie)
-
-		log.Println(userName)
-		userMap[userUUIDString] = userName
-
-		http.Redirect(w, r, "/", 302)
 	}
 }
 
@@ -97,7 +101,6 @@ func logoutHandler (w http.ResponseWriter, r *http.Request) {
 func timeHandler (w http.ResponseWriter, r *http.Request) {
 	//getting the current time
 	currentTime := time.Now()
-
 	//serving the current time page
 
 	//Formating the current time in the proper format and storing it to a variable
@@ -105,7 +108,17 @@ func timeHandler (w http.ResponseWriter, r *http.Request) {
 	//printing the head css styles to the page
 	fmt.Fprint(w, "<html><head><style>p {font-size: xx-large} span.time {color: red}</style></head>")
 	//printing the body of the page
-	fmt.Fprint(w, "<body><p>The time is now <span class=\"time\">", pageTime, "</span>.</p></body></html>")
+	fmt.Fprint(w, "<body><p>The time is now <span class=\"time\">", pageTime, "</span>")
+
+	cookie,_ := r.Cookie("TimeServer")
+
+	if cookie != nil {
+		value := cookie.Value
+		name := userMap[value]
+		fmt.Fprint(w, ", ", name)
+	}
+
+	fmt.Fprint(w,".</p></body></html>")
 }
 func pageError(w http.ResponseWriter, r *http.Request){
 	//writing 404 not found error to html header
