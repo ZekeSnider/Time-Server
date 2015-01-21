@@ -1,6 +1,6 @@
 //Zeke Snider
 //CSS 490 Homework 2
-//Personalzied Time Server version 1.0.6
+//Personalzied Time Server version 1.1.1
 
 /*
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -212,7 +212,7 @@ func main() {
 
 	//Outputting server version number if it is requested in command line flags
 	if *versionBoolPointer == true {
-		fmt.Print("Personalized time server version 1.0.6")
+		fmt.Print("Personalized time server version 1.1.1")
 	}
 
 	//adding a ":" to the port number to match the format requested by http.ListenAndServe
