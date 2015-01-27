@@ -26,6 +26,7 @@ package main
 import 
 (
 	"net/http"
+	"html/template"
 	"html"
 	"fmt"
 	"time"
@@ -35,6 +36,12 @@ import
     "os/exec"
     "sync"
 )
+
+type TimePage struct {
+    Time string
+    UserString string
+}
+
 
 //Declaring map with string indexs to store UDID ints
 //Used to store user logins.
@@ -148,22 +155,28 @@ func logoutHandler (w http.ResponseWriter, r *http.Request) {
 	
 }
 
+
 func timeHandler (w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+
 	//getting the current time
-	currentTime := time.Now()
+	//currentTime := time.Now()
 	//serving the current time page
 
 	//Formating the current time in the proper format and storing it to a variable
-	pageTime := currentTime.Format("03:04:05PM")
-	//printing the head css styles to the page
-	fmt.Fprint(w, "<html><head><style>p {font-size: xx-large} span.time {color: red}</style></head>")
-	//printing the body of the page
-	fmt.Fprint(w, "<body><p>The time is now <span class=\"time\">", pageTime, "</span>")
+	pageTime := time.Now().Format("03:04:05PM")
+
+	tmpl := template.New("Time page")
+	tmpl, err := tmpl.ParseFiles("templates/menu.html", "templates/time.html",)
+	if err != nil {
+		fmt.Printf("parsing template: %s\n", err)
+		return
+	}
 
 	//checking for a client's cookie
 	cookie,_ := r.Cookie("TimeServerSession")
 
+	var user string
 	//if a cookie exists (the user is logged in), the UUID from the cookie is used
 	//to retrieve the userName from the internal map. The username is then printed
 	if cookie != nil {
@@ -173,10 +186,19 @@ func timeHandler (w http.ResponseWriter, r *http.Request) {
 		name := userMap[value]
 		mutex.Unlock()
 
-		fmt.Fprint(w, ", ", name)
+		user = ", " + name
+	} else {
+		user = ""
 	}
 
-	fmt.Fprint(w,".</p></body></html>")
+
+	theTime := TimePage {
+		Time: pageTime,
+		UserString: user,
+	}
+
+	tmpl.ExecuteTemplate(w,"page", theTime)
+
 }
 func pageError(w http.ResponseWriter, r *http.Request){
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
@@ -207,6 +229,10 @@ func main() {
 	//output to the console.
 	versionBoolPointer := flag.Bool("v", false, "Display server version bool")
 
+	//Template path (optional): if specified the templates will be loaded 
+	//from this path
+	//templatePathPointer := flag.String("template", "templates", "Path to templates")
+
 	//parsing the flags
 	flag.Parse()
 
@@ -218,6 +244,10 @@ func main() {
 	//adding a ":" to the port number to match the format requested by http.ListenAndServe
 	portNumber := ":"+*portPointer
 
+	//templatePath := *templatePathPointer
+
+
+    http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
 
     http.HandleFunc("/login", loginHandler)
     //http.HandleFunc("/login/:name", loginActionHandler)
@@ -229,6 +259,10 @@ func main() {
 
     //If any other page is requested, a 404 page will be displayed
     http.HandleFunc("/", homeHandler)
+
+
+
+
 
     //attempting to start the server on the requested port.
     //if there are any errors they will be stored to the err variable
