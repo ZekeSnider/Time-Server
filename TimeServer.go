@@ -1,6 +1,5 @@
 //Zeke Snider
-//CSS 490 Homework 2
-//Personalzied Time Server version 1.1.1
+//CSS 490 Assignment 3
 
 /*
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -42,11 +41,21 @@ type TimePage struct {
     UserString string
 }
 
+type LoginPage struct {
+    ErrorMessage string
+}
+
+type HomePage struct {
+	UserName string
+}
+
 
 //Declaring map with string indexs to store UDID ints
 //Used to store user logins.
 var userMap map[string]string
 
+
+var templatePath string
 //Creating a mutex to synchronize state of the map
 var mutex = &sync.Mutex{}
 
@@ -71,7 +80,22 @@ func homeHandler (w http.ResponseWriter, r *http.Request) {
 		name := userMap[value]
 		mutex.Unlock()
 
-		fmt.Fprint(w, "<html><body><p>hello, ", name, ". </p></body></html>")
+
+		tmpl := template.New("Home page")
+		tmpl, err := tmpl.ParseFiles(templatePath + "/menu.tmpl", templatePath + "/home.tmpl",)
+
+		if err != nil {
+			fmt.Printf("parsing template: %s\n", err)
+			return
+		}
+
+		theHome := HomePage{
+			UserName: name,
+		}
+
+		tmpl.ExecuteTemplate(w,"page", theHome)
+
+
 	} else {	
 		//if there is no cookie, the client will be redirected to the login page
 		http.Redirect(w, r, "/login", 302)
@@ -79,12 +103,31 @@ func homeHandler (w http.ResponseWriter, r *http.Request) {
 
 }
 
+
 func loginHandler (w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 
+	tmpl := template.New("Login page")
+	tmpl, err := tmpl.ParseFiles(templatePath + "/menu.tmpl", templatePath + "/login.tmpl",)
+
+	if err != nil {
+		fmt.Printf("parsing template: %s\n", err)
+		return
+	}
+
+
+	
+
+	
 	//If the method is GET (regular page load), the login form will be displayed
 	if r.Method == "GET" {
-		fmt.Fprint(w, "<html><body><form method=\"post\" action=\"login\">What is your name, Earthling?<input type=\"text\" name=\"name\" size=\"50\"><input type=\"submit\"></form></p></body></html>")
+
+		theLogin := LoginPage{
+			ErrorMessage: "",
+		}
+
+		tmpl.ExecuteTemplate(w,"page", theLogin)
+
 	//if the method is POST (form submit) the form data will be parsed and handled
 	} else if r.Method == "POST" {
 		//getting the name from the form
@@ -130,7 +173,11 @@ func loginHandler (w http.ResponseWriter, r *http.Request) {
 		//if the name was empty no data is processed and 
 		//a copy of the login page with the text "C'mon, I need a name" is displayed to the user
 		} else {
-			fmt.Fprint(w, "<html><body><form method=\"post\" action=\"login\">What is your name, Earthling?<input type=\"text\" name=\"name\" size=\"50\"><input type=\"submit\"></form>C'mon, I need a name.</p></body></html>")
+			theLogin := LoginPage {
+				ErrorMessage: "C'mon, I need a name.",
+			}
+
+			tmpl.ExecuteTemplate(w,"page", theLogin)
 		}
 	}
 }
@@ -159,15 +206,12 @@ func logoutHandler (w http.ResponseWriter, r *http.Request) {
 func timeHandler (w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
 
-	//getting the current time
-	//currentTime := time.Now()
-	//serving the current time page
-
 	//Formating the current time in the proper format and storing it to a variable
 	pageTime := time.Now().Format("03:04:05PM")
 
 	tmpl := template.New("Time page")
-	tmpl, err := tmpl.ParseFiles("templates/menu.html", "templates/time.html",)
+	tmpl, err := tmpl.ParseFiles(templatePath + "/menu.tmpl", templatePath + "/time.tmpl",)
+
 	if err != nil {
 		fmt.Printf("parsing template: %s\n", err)
 		return
@@ -231,20 +275,20 @@ func main() {
 
 	//Template path (optional): if specified the templates will be loaded 
 	//from this path
-	//templatePathPointer := flag.String("template", "templates", "Path to templates")
+	templatePathPointer := flag.String("template", "templates", "Path to templates")
 
 	//parsing the flags
 	flag.Parse()
 
 	//Outputting server version number if it is requested in command line flags
 	if *versionBoolPointer == true {
-		fmt.Print("Personalized time server version 1.1.1")
+		fmt.Print("Personalized time server version 1.1.3")
 	}
 
 	//adding a ":" to the port number to match the format requested by http.ListenAndServe
 	portNumber := ":"+*portPointer
 
-	//templatePath := *templatePathPointer
+	templatePath = *templatePathPointer
 
 
     http.Handle("/css/", http.StripPrefix("/css/", http.FileServer(http.Dir("css"))))
