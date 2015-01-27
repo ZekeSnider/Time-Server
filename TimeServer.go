@@ -36,19 +36,11 @@ import
     "sync"
 )
 
-type TimePage struct {
+type Page struct {
     Time string
-    UserString string
-}
-
-type LoginPage struct {
+    UserName string
     ErrorMessage string
 }
-
-type HomePage struct {
-	UserName string
-}
-
 
 //Declaring map with string indexs to store UDID ints
 //Used to store user logins.
@@ -69,32 +61,12 @@ func homeHandler (w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Checking for a client cookie
-	cookie,_ := r.Cookie("TimeServerSession")
+	user := checkUserCookie(r)
 
 	//If there is a cookie, the name will be retrieved from the UUID and internal map, and
 	//the page will display hello, name.
-	if cookie != nil {
-		value := cookie.Value
-
-		mutex.Lock()
-		name := userMap[value]
-		mutex.Unlock()
-
-
-		tmpl := template.New("Home page")
-		tmpl, err := tmpl.ParseFiles(templatePath + "/menu.tmpl", templatePath + "/home.tmpl",)
-
-		if err != nil {
-			fmt.Printf("parsing template: %s\n", err)
-			return
-		}
-
-		theHome := HomePage{
-			UserName: name,
-		}
-
-		tmpl.ExecuteTemplate(w,"page", theHome)
-
+	if user != "" {
+		loadPage(w, "home", &Page{UserName: user})
 
 	} else {	
 		//if there is no cookie, the client will be redirected to the login page
@@ -106,27 +78,10 @@ func homeHandler (w http.ResponseWriter, r *http.Request) {
 
 func loginHandler (w http.ResponseWriter, r *http.Request) {
 	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
-
-	tmpl := template.New("Login page")
-	tmpl, err := tmpl.ParseFiles(templatePath + "/menu.tmpl", templatePath + "/login.tmpl",)
-
-	if err != nil {
-		fmt.Printf("parsing template: %s\n", err)
-		return
-	}
-
-
-	
-
 	
 	//If the method is GET (regular page load), the login form will be displayed
 	if r.Method == "GET" {
-
-		theLogin := LoginPage{
-			ErrorMessage: "",
-		}
-
-		tmpl.ExecuteTemplate(w,"page", theLogin)
+		loadPage(w, "login", &Page{})
 
 	//if the method is POST (form submit) the form data will be parsed and handled
 	} else if r.Method == "POST" {
@@ -173,11 +128,7 @@ func loginHandler (w http.ResponseWriter, r *http.Request) {
 		//if the name was empty no data is processed and 
 		//a copy of the login page with the text "C'mon, I need a name" is displayed to the user
 		} else {
-			theLogin := LoginPage {
-				ErrorMessage: "C'mon, I need a name.",
-			}
-
-			tmpl.ExecuteTemplate(w,"page", theLogin)
+			loadPage(w, "login", &Page{ErrorMessage: "C'mon, I need a name."})
 		}
 	}
 }
@@ -202,27 +153,13 @@ func logoutHandler (w http.ResponseWriter, r *http.Request) {
 	
 }
 
+func setUserCookie (w http.ResponseWriter) {
 
-func timeHandler (w http.ResponseWriter, r *http.Request) {
-	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+}
 
-	//Formating the current time in the proper format and storing it to a variable
-	pageTime := time.Now().Format("03:04:05PM")
-
-	tmpl := template.New("Time page")
-	tmpl, err := tmpl.ParseFiles(templatePath + "/menu.tmpl", templatePath + "/time.tmpl",)
-
-	if err != nil {
-		fmt.Printf("parsing template: %s\n", err)
-		return
-	}
-
-	//checking for a client's cookie
+func checkUserCookie (r *http.Request) (string) {
 	cookie,_ := r.Cookie("TimeServerSession")
 
-	var user string
-	//if a cookie exists (the user is logged in), the UUID from the cookie is used
-	//to retrieve the userName from the internal map. The username is then printed
 	if cookie != nil {
 		value := cookie.Value
 
@@ -230,18 +167,43 @@ func timeHandler (w http.ResponseWriter, r *http.Request) {
 		name := userMap[value]
 		mutex.Unlock()
 
-		user = ", " + name
+		return name
 	} else {
-		user = ""
+		return ""
+	}
+}
+
+func loadPage (w http.ResponseWriter, inputTemplate string, p *Page){
+	tmpl := template.New("Page")
+	tmpl, err := tmpl.ParseFiles(templatePath + "/menu.tmpl", templatePath + "/" + inputTemplate + ".tmpl",)
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
+	err = tmpl.ExecuteTemplate(w,"page", p)
+	
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+}
 
-	theTime := TimePage {
-		Time: pageTime,
-		UserString: user,
+func timeHandler (w http.ResponseWriter, r *http.Request) {
+	log.Printf("%s %s %s", r.RemoteAddr, r.Method, r.URL)
+
+	//Formating the current time in the proper format and storing it to a variable
+	pageTime := time.Now().Format("03:04:05PM")
+
+	user := checkUserCookie(r)
+
+	if user != "" {
+		user = ", " + user
 	}
 
-	tmpl.ExecuteTemplate(w,"page", theTime)
+	loadPage(w, "time", &Page{ Time: pageTime, UserName: user})
+	
 
 }
 func pageError(w http.ResponseWriter, r *http.Request){
@@ -249,8 +211,9 @@ func pageError(w http.ResponseWriter, r *http.Request){
 	//writing 404 not found error to html header
 	w.WriteHeader(http.StatusNotFound)
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+
 	//Displaying custom 404 text to the error page
-	fmt.Fprintf(w, "<p>These are not the URLs you're looking for.</p>")
+	loadPage(w, "error", &Page{})
 
 }
 func main() {
@@ -282,7 +245,7 @@ func main() {
 
 	//Outputting server version number if it is requested in command line flags
 	if *versionBoolPointer == true {
-		fmt.Print("Personalized time server version 1.1.3")
+		fmt.Print("Personalized time server version 1.1.5")
 	}
 
 	//adding a ":" to the port number to match the format requested by http.ListenAndServe
@@ -303,10 +266,6 @@ func main() {
 
     //If any other page is requested, a 404 page will be displayed
     http.HandleFunc("/", homeHandler)
-
-
-
-
 
     //attempting to start the server on the requested port.
     //if there are any errors they will be stored to the err variable
