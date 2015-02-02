@@ -1,7 +1,11 @@
+GOPATH := $(CURDIR)
 all: build
 
 build:
-	go build -o bin/TimeServer TimeServer.go
+
+	go fmt src/TimeServer.go
+	GOPATH=$(GOPATH) go build -o bin/TimeServer src/TimeServer.go
 
 run:
-	go run TimeServer.go
+	go fmt src/TimeServer.go
+	GOPATH=$(GOPATH) go run src/TimeServer.go

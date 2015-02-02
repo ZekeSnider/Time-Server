@@ -1,34 +1,45 @@
-# Assignment 2: Personalized Time Server
+# Assignment 3: Refactoring
 Zeke Snider  
 CSS 490C  
 1/11/15  
 
 ## Overview
-This program extends the Assignment 1: Time Server to include more functionality. 
+This program refactors the Assignment 2: Personalized Time Server to use templates and a new logging library. 
 
 The time server uses the following golang libraries:
-* net/http
-* html"
-* fmt
-* time
 * flag
-* log
-* strings
+* log "github.com/cihub/seelog
+* html
+* html/template
+* net/http
 * os/exec
+* path/filepath
+* strings
 * sync
+* time
 
 ## Build Instructions
-The program requires no special build instructions. Simply CD to the directory containing TimeServer.go then run "go build TimeServer.go", then "./TimeServer" and any flags if required. The server will then launch and display http request logs to the console.  
-
-Alternatively, the included Makefile can be used to build and run the server.
+The included makefile should be used to build and the run the project. "make build", can be used to build, then "./bin/TimeServer" can be used to run the server. Alternatively "make run" can be used to directly run the server from the makefile.
 
 ## Design Notes
+The seelog library has been used to replace the old logging system. The log output file is stored at "/etc/timeserver.log". 
+
+The following template files are required for proper functionality of the server:  
+
+* error.tmpl
+* home.tmpl
+* login.tmpl
+* logout.tmpl
+* menu.tmpl
+* time.tmpl  
+
+The menu.tmpl is the main template file, and the other files are used as subtemplates. 
+
 The sync library is used to lock and unlock the internal UUID name map so that the map does not go out of sync between multiple requests at the same time.  
 
 When the server stops, the server's internal map is deleted but the client's cookie still remains unless they logout before the server stops. This is because the cookies are set to expire in 180 days. Thus, if a user logs in, the server restarts, then the user tries to load the homepage it will display "Hello, ." because it cannot pull the name from the map anymore. This could be solved in a future iteration by implementing permanent user map storage.  
 
-If any errors occur when starting the server, the errors are output to the console and the program is terminated. For example, this can happen if the starting port you provide is already in use by another service.
-
+Errors are logged using seelog error logging. Regular requests or other traces are logged using debug logging. General inffo are logged using info log.
 
 ## Page List 
 
@@ -54,3 +65,8 @@ If "v" is supplied on the command line arguments as true, the server will print 
 ### -port
 If "port" is supplied on the command line, it will be used as the starting port for server. By default the server will start on port 8080 if no port is supplied.
 
+### -log
+If "log" is supplied on the command line, it will be used as the path to the seelog configuration. For example, if -log="logconfig.xml" is suppliod, the log will be loaded from /etc/logconfig.xml. The default value is seelog.xml
+
+### -template
+If "template" is supplied on the command line, it will be used as the path to the templates directory. For example, if -log="sampletemplates" is suppliod, the templates will be loaded from /etc/samepletemplates. The default value is templates.

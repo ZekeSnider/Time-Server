@@ -1,0 +1,20 @@
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:78	Page Loaded. RemoteAddress:127.0.0.1:59616 Method:GET URL:/
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.loginHandler:102	Page Loaded. RemoteAddress:127.0.0.1:59616 Method:GET URL:/login
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:78	Page Loaded. RemoteAddress:127.0.0.1:59616 Method:GET URL:/favicon.ico
+2015-01-31	[WARN]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:84	404 Page Not Found: 127.0.0.1:59616 GET /favicon.ico
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:78	Page Loaded. RemoteAddress:127.0.0.1:59618 Method:GET URL:/index.html
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.loginHandler:102	Page Loaded. RemoteAddress:127.0.0.1:59618 Method:GET URL:/login
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.loginHandler:102	Page Loaded. RemoteAddress:127.0.0.1:59618 Method:POST URL:/login
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:78	Page Loaded. RemoteAddress:127.0.0.1:59618 Method:GET URL:/
+2015-01-31	[INFO]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:78	Page Loaded. RemoteAddress:127.0.0.1:59618 Method:GET URL:/index.html
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:77	Page Loaded. RemoteAddress:127.0.0.1:59669 Method:GET URL:/
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.loginHandler:101	Page Loaded. RemoteAddress:127.0.0.1:59669 Method:GET URL:/login
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.timeHandler:191	Page Loaded. RemoteAddress:127.0.0.1:59669 Method:GET URL:/time
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.logoutHandler:156	Page Loaded. RemoteAddress:127.0.0.1:59675 Method:GET URL:/logout
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.logoutHandler:166	User with UUID 9952E0F2-3AE2-49A8-9F82-16E8E85CA33A logged out.
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.timeHandler:191	Page Loaded. RemoteAddress:127.0.0.1:59675 Method:GET URL:/time
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:77	Page Loaded. RemoteAddress:127.0.0.1:59675 Method:GET URL:/index.html
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.loginHandler:101	Page Loaded. RemoteAddress:127.0.0.1:59675 Method:GET URL:/login
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.loginHandler:101	Page Loaded. RemoteAddress:127.0.0.1:59675 Method:POST URL:/login
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.loginHandler:137	User logging in. UUID: 40297EFE-4158-410C-8CE8-A51D928E7E13 Name: Zeke
+2015-01-31	[DEBUG]	/Users/Zeke/Desktop/go/Assignment3/src/TimeServer.go:main.homeHandler:77	Page Loaded. RemoteAddress:127.0.0.1:59675 Method:GET URL:/
