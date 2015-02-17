@@ -1,7 +1,7 @@
 # Assignment 3: Refactoring
 Zeke Snider  
 CSS 490C  
-1/11/15  
+2/2/15  
 
 ## Overview
 This program refactors the Assignment 2: Personalized Time Server to use templates and a new logging library. 
@@ -22,7 +22,7 @@ The time server uses the following golang libraries:
 The included makefile should be used to build and the run the project. "make build", can be used to build, then "./bin/TimeServer" can be used to run the server. Alternatively "make run" can be used to directly run the server from the makefile.
 
 ## Design Notes
-The seelog library has been used to replace the old logging system. The log output file is stored at "/etc/timeserver.log". 
+The seelog library has been used to replace the old logging system. The log output file is stored at "/etc/timeserver.log". Errors are logged using seelog error logging. Regular requests or other traces are logged using debug logging. General info are logged using info log.
 
 The following template files are required for proper functionality of the server:  
 
@@ -33,13 +33,14 @@ The following template files are required for proper functionality of the server
 * menu.tmpl
 * time.tmpl  
 
-The menu.tmpl is the main template file, and the other files are used as subtemplates. 
+The menu.tmpl is the main template file, and the other files are used as subtemplates.  
+
+All cookie functionality has been refactored into checkUserCookie, setUserCookie logoutCookie, which manage login/logout and session management.
 
 The sync library is used to lock and unlock the internal UUID name map so that the map does not go out of sync between multiple requests at the same time.  
 
-When the server stops, the server's internal map is deleted but the client's cookie still remains unless they logout before the server stops. This is because the cookies are set to expire in 180 days. Thus, if a user logs in, the server restarts, then the user tries to load the homepage it will display "Hello, ." because it cannot pull the name from the map anymore. This could be solved in a future iteration by implementing permanent user map storage.  
+When the server stops, the server's internal map is deleted but the client's cookie still remains unless they logout before the server stops. 
 
-Errors are logged using seelog error logging. Regular requests or other traces are logged using debug logging. General inffo are logged using info log.
 
 ## Page List 
 
