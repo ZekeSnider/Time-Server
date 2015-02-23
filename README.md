@@ -1,25 +1,14 @@
-# Assignment 3: Refactoring
+# Assignment 4: AuthServer
 Zeke Snider  
 CSS 490C  
-2/2/15  
+2/20/15  
 
 ## Overview
-This program refactors the Assignment 2: Personalized Time Server to use templates and a new logging library. 
+This program has added an authentication server to "Assignment 3: Refactoring". The time server still sets cookies, but requests to check the usermap are now sent via http requests the authserver. There is also a config package which is used to load the command line flags. More features are added as seen in the flags section below.
 
-The time server uses the following golang libraries:
-* flag
-* log "github.com/cihub/seelog
-* html
-* html/template
-* net/http
-* os/exec
-* path/filepath
-* strings
-* sync
-* time
 
 ## Build Instructions
-The included makefile should be used to build and the run the project. "make build", can be used to build, then "./bin/TimeServer" can be used to run the server. Alternatively "make run" can be used to directly run the server from the makefile.
+The included makefile should be used to build and the run the project. "make build", should be used to build, then "./bin/TimeServer" can be used to run the time server, and "./bin/AuthServer" to run the authserver. I moved all the flag parsing to the config.go package, but for some reason I wasn't able to get both the auth server and time server to load the same flags. Thus, you must supply the appropriate flags to both executables on launch. 
 
 ## Design Notes
 The seelog library has been used to replace the old logging system. The log output file is stored at "/etc/timeserver.log". Errors are logged using seelog error logging. Regular requests or other traces are logged using debug logging. General info are logged using info log.
@@ -68,6 +57,21 @@ If "port" is supplied on the command line, it will be used as the starting port 
 
 ### -log
 If "log" is supplied on the command line, it will be used as the path to the seelog configuration. For example, if -log="logconfig.xml" is suppliod, the log will be loaded from /etc/logconfig.xml. The default value is seelog.xml
+
+### -authlog
+Same as -log, except used for the auth server. Default value is authlog.xml
+
+### -authport, -authhost
+Specifies where the auth server should start, and where the time server should look for it. Default value is http://localhost:8090
+
+### -response, -deviation
+Each request to the time server is now throttled to simulate a delay in generating the time. The throttle delay is generated using a random number from a normal distribution of response and deviation (in ms). 
+
+### -maxinflight
+Configures the maximum number of requests that the time server should handle at once. Whenever a request is handled, a protected counter is checked to see if under the maxinflight number. If it is under the limit, the counter is incremented, the request is handled, then the counter is decremented. If the server cannot handle the request, an error is thrown.
+
+### -dumpfile, -checkpointinterval
+Specifies where the auth server should backup the userlist to (json file), and how often it should do so. The auth server starts another go thread which will backup the userlist every checkpointinterval ms while the server is running. This exported file is checked for integrity. When the server starts the next time the user list is loaded back from the file.
 
 ### -template
 If "template" is supplied on the command line, it will be used as the path to the templates directory. For example, if -log="sampletemplates" is suppliod, the templates will be loaded from /etc/samepletemplates. The default value is templates.
