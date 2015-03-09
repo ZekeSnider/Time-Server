@@ -4,9 +4,12 @@ all: build
 build:
 	GOPATH=$(GOPATH) go fmt src/command/timeserver/timeserver.go
 	GOPATH=$(GOPATH) go fmt src/command/authserver/authserver.go
-	GOPATH=$(GOPATH) go install command/config
-	GOPATH=$(GOPATH) go build -o bin/AuthServer src/command/authserver/authserver.go
-	GOPATH=$(GOPATH) go build -o bin/TimeServer src/command/timeserver/timeserver.go
+	GOPATH=$(GOPATH) go fmt src/command/loadgen/loadgen.go
+	GOPATH=$(GOPATH) go build command/config
+	GOPATH=$(GOPATH) go build command/counter
+	GOPATH=$(GOPATH) go build -o bin/authserver src/command/authserver/authserver.go
+	GOPATH=$(GOPATH) go build -o bin/timeserver src/command/timeserver/timeserver.go
+	GOPATH=$(GOPATH) go build -o bin/loadgen src/command/loadgen/loadgen.go
 
 run:
 	go fmt src/TimeServer.go
@@ -16,3 +19,15 @@ run:
 install:
 	GOPATH=$(GOPATH) go install command/timeserver
 	GOPATH=$(GOPATH) go install command/authserver
+
+
+load:
+	GOPATH=$(GOPATH) go build -o bin/LoadGen src/command/loadgen/loadgen.go
+
+counter:
+	GOPATH=$(GOPATH) go build src/command/counter/counter.go
+
+loadtest:
+	./bin/authserver -log=auth-log.xml &
+	./bin/timeserver -log=seelog.xml -port=8081 -maxinflight=80 -response=500 -deviation=300 &
+	./bin/loadgen -url='http://localhost:8081/time' -runtime=10 -rate=200 --burst=20 -timeout=1000

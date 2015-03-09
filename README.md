@@ -1,14 +1,19 @@
-# Assignment 4: AuthServer
+# Assignment 5: Load Test
 Zeke Snider  
 CSS 490C  
-2/20/15  
+3/3/15
 
 ## Overview
-This program has added an authentication server to "Assignment 3: Refactoring". The time server still sets cookies, but requests to check the usermap are now sent via http requests the authserver. There is also a config package which is used to load the command line flags. More features are added as seen in the flags section below.
+This program has added a counter and load test to Assignment 4. The counter is a thread safe class that is used to store status code responses for the load class. The load test is used to create a fake load for the time/auth server to process.
 
 
 ## Build Instructions
-The included makefile should be used to build and the run the project. "make build", should be used to build, then "./bin/TimeServer" can be used to run the time server, and "./bin/AuthServer" to run the authserver. I moved all the flag parsing to the config.go package, but for some reason I wasn't able to get both the auth server and time server to load the same flags. Thus, you must supply the appropriate flags to both executables on launch. 
+The included makefile should be used to build and the run the project. "Make build", should be used to build, then "Make loadtest" can be used to run the load test with the default parameters. Alternatively, copy the following into the terminal and modify the flags as needed.
+
+./bin/authserver -log=auth-log.xml &  
+./bin/timeserver -log=seelog.xml -port=8081 -maxinflight=80 -response=500 -deviation=300 &  
+./bin/loadgen -url='http://localhost:8081/time' -runtime=10 -rate=200 --burst=20 -timeout=1000  
+
 
 ## Design Notes
 The seelog library has been used to replace the old logging system. The log output file is stored at "/etc/timeserver.log". Errors are logged using seelog error logging. Regular requests or other traces are logged using debug logging. General info are logged using info log.
@@ -47,6 +52,25 @@ The logout page resets the client's cookie with a new expired cookie so that the
 ###Time ("/time")
 The time page functions the same as the "/time" page in the Simple Time Server, except the time is addresssed to the user's name if a cookie is present.  
 
+
+##Loadgen flags
+
+### -rate
+average rate of requests (per second)
+
+### -rate
+number of concurrent requests to issue"
+
+### -timeout
+max time to wait for a response (in ms)
+
+### -runtime
+number of seconds to process for
+
+### -url 
+location to load test for
+
+
 ## Flag List
 
 ### -v
@@ -75,3 +99,5 @@ Specifies where the auth server should backup the userlist to (json file), and h
 
 ### -template
 If "template" is supplied on the command line, it will be used as the path to the templates directory. For example, if -log="sampletemplates" is suppliod, the templates will be loaded from /etc/samepletemplates. The default value is templates.
+
+
