@@ -51,14 +51,16 @@ func load() {
 func loadRoutine() {
 	//loading the page with a timeout specified by command line flag.
 	loadClient := http.Client{
-		Timeout: time.Duration(Timeout) * time.Millisecond,
+		Timeout: time.Duration(Timeout) * time.Second,
 	}
 	resp, err := loadClient.Get(Url)
 
 	counter.IncrementValue("Total")
+
 	if err != nil {
 		counter.IncrementValue("Errors")
 	} else {
+		resp.Body.Close()
 		//getting statuscode, then incrementing related map.
 		status := resp.StatusCode
 		if status == 503 {

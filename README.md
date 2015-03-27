@@ -1,18 +1,19 @@
-# Assignment 5: Load Test
+# Assignment 6: Monitor
 Zeke Snider  
 CSS 490C  
 3/3/15
 
 ## Overview
-This program has added a counter and load test to Assignment 4. The counter is a thread safe class that is used to store status code responses for the load class. The load test is used to create a fake load for the time/auth server to process.
+This program has added a monitor package to assignment 5. The time server and auth server have been modified to count 200s, 400s, logins, and other stats using the counter package from assignment 5. The monitor package pings the targetlist (-target flag, deliniated by commas) on the /monitor page every -sampleIntervalSec seconds. It runs for -runTimeSec seconds, then stops and formats the json, outputs it, then stops. The results are stored internally in var Results map[string] map[string][]Sample. The first key is the target url. The second is the stat type ("400s", "200s", etc). The []Sample is an array of result pairs (time and value) collected from the respective server's specific stat. Integration testing has been done on the authserver, timeserver, and loadgen to make sure they are compatible with the new changes.
 
 
 ## Build Instructions
-The included makefile should be used to build and the run the project. "Make build", should be used to build, then "Make loadtest" can be used to run the load test with the default parameters. Alternatively, copy the following into the terminal and modify the flags as needed.
+The included makefile should be used to build and the run the project. "Make build", should be used to build, then start the servers by using ./bin/authserver and ./bin/timeserver. Then use "./bin/monitor -targets=http://localhost:8080,http://localhost:8090 -sampleIntervalSec=4 -runTimeSec=10" to run the test. The json will be output to the console.
 
-./bin/authserver -log=auth-log.xml &  
-./bin/timeserver -log=seelog.xml -port=8081 -maxinflight=80 -response=500 -deviation=300 &  
-./bin/loadgen -url='http://localhost:8081/time' -runtime=10 -rate=200 --burst=20 -timeout=1000  
+## Old Readme
+README for the previous assignments is included below.  
+  
+
 
 
 ## Design Notes

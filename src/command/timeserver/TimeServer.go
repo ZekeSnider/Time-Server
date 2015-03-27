@@ -25,6 +25,8 @@ package main
 
 import (
 	config "command/config"
+	counter "command/counter"
+	"encoding/json"
 	"fmt"
 	log "github.com/cihub/seelog"
 	"html"
@@ -197,6 +199,8 @@ func homeHandler(w http.ResponseWriter, r *http.Request) {
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
 	if checkCurrent() {
+		counter.IncrementValue("login")
+
 		log.Debugf("Page Loaded. RemoteAddress:%s Method:%s URL:%s", r.RemoteAddr, r.Method, r.URL)
 
 		//If the method is GET (regular page load), the login form will be displayed
@@ -253,6 +257,7 @@ func loadPage(w http.ResponseWriter, inputTemplate string, p *Page) {
 		return
 	}
 
+	counter.IncrementValue("200s")
 	//executing the template
 	err = tmpl.ExecuteTemplate(w, "page", p)
 
@@ -274,7 +279,10 @@ func timeHandler(w http.ResponseWriter, r *http.Request) {
 		//If the user is logged in, their name will be displayed on the page
 		user := CheckUserCookie(r)
 		if user != "" {
+			counter.IncrementValue("time-user")
 			user = ", " + user
+		} else {
+			counter.IncrementValue("time-anon")
 		}
 
 		loadPage(w, "time", &Page{Time: pageTime, UserName: user, UTCTime: pageUTCTime})
@@ -285,8 +293,18 @@ func timeHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func monitorHandler(w http.ResponseWriter, r *http.Request) {
+	counter.IncrementValue("200s")
+	Mapcopy := counter.GetMapCopy()
+
+	jsonDump, _ := json.Marshal(Mapcopy)
+	fmt.Fprintf(w, string(jsonDump))
+
+}
+
 func pageError(w http.ResponseWriter, r *http.Request) {
 	if checkCurrent() {
+		counter.IncrementValue("404s")
 		log.Debugf("Page Loaded. RemoteAddress:%s Method:%s URL:%s", r.RemoteAddr, r.Method, r.URL)
 
 		//writing 404 not found error to html header
@@ -302,6 +320,12 @@ func pageError(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	counter.ResetMapValue("login")
+	counter.ResetMapValue("time-user")
+	counter.ResetMapValue("time-anon")
+	counter.ResetMapValue("200s")
+	counter.ResetMapValue("404s")
+
 	currentConnections = 0
 
 	//loading the logger
@@ -327,6 +351,7 @@ func main() {
 	http.HandleFunc("/login", loginHandler)
 	http.HandleFunc("/logout", logoutHandler)
 	http.HandleFunc("/time", timeHandler)
+	http.HandleFunc("/monitor", monitorHandler)
 	http.HandleFunc("/", homeHandler)
 
 	//attempting to start the server on the requested port.

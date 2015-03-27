@@ -25,6 +25,7 @@ package main
 
 import (
 	config "command/config"
+	counter "command/counter"
 	"encoding/json"
 	"fmt"
 	log "github.com/cihub/seelog"
@@ -156,15 +157,20 @@ func exportUserList(JSONFilePath string) bool {
 
 //returns username from a UUID via HTTP request
 func getHandler(w http.ResponseWriter, r *http.Request) {
+	counter.IncrementValue("get-cookie")
+
 	//attempting to get the name
 	userUUID := r.FormValue("cookie")
 	userName := getMap(userUUID)
 
 	//if there was no name, send a header error
 	if userName == "" {
+		counter.IncrementValue("no-cookie")
 		w.WriteHeader(400)
+		counter.IncrementValue("400s")
 	} else {
 		w.WriteHeader(200)
+		counter.IncrementValue("200s")
 	}
 
 	//otherwise, print the name
@@ -173,6 +179,8 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func setHandler(w http.ResponseWriter, r *http.Request) {
+	counter.IncrementValue("set-cookie")
+
 	//getting values from url
 	userUUID := r.FormValue("cookie")
 	userName := r.FormValue("name")
@@ -183,13 +191,26 @@ func setHandler(w http.ResponseWriter, r *http.Request) {
 	//if the data is bad, throw an error
 	if userName == "" || userUUID == "" {
 		w.WriteHeader(400)
+		counter.IncrementValue("400s")
 	} else {
 
 		w.WriteHeader(200)
+		counter.IncrementValue("200s")
 	}
 
+	counter.IncrementValue("set-cookie")
 	//print the data
 	fmt.Fprintf(w, "%s %s", userName, userUUID)
+}
+
+
+func monitorHandler(w http.ResponseWriter, r *http.Request) {
+	counter.IncrementValue("200s")
+	Mapcopy := counter.GetMapCopy()
+
+	jsonDump, _ := json.Marshal(Mapcopy)
+	fmt.Fprintf(w, string(jsonDump))
+
 }
 
 //pages made to use during testing that displays all elements in map
@@ -239,7 +260,27 @@ func repeatBackup(t time.Duration) {
 		exportRoutine()
 	}
 }
+
+func pageError(w http.ResponseWriter, r *http.Request) {
+	counter.IncrementValue("404s")
+
+	//writing 404 not found error to html header
+	w.WriteHeader(http.StatusNotFound)
+
+	//Displaying custom 404 text to the error page
+	fmt.Fprintf(w,"Error 404 page not found")
+
+
+}
 func main() {
+	counter.ResetMapValue("set-cookie")
+	counter.ResetMapValue("get-cookie")
+	counter.ResetMapValue("no-cookie")
+	counter.ResetMapValue("200s")
+	counter.ResetMapValue("400s")
+	counter.ResetMapValue("404s")
+
+
 	//creating map
 	UserMap = make(map[string]string)
 
@@ -261,10 +302,14 @@ func main() {
 	//importing the user list
 	_ = importUserList(config.DumpFile, true)
 
+
 	//starting the server
 	http.HandleFunc("/get", getHandler)
 	http.HandleFunc("/set", setHandler)
 	http.HandleFunc("/all", displayAll)
+	http.HandleFunc("/monitor", monitorHandler)
+	http.HandleFunc("/", pageError)
+
 	err = http.ListenAndServe(config.GetAuthPort(), nil)
 	log.Errorf("Server err:%v", err)
 }
